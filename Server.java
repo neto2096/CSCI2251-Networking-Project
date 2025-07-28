@@ -42,13 +42,10 @@ public class Server {
 
     // Helper method to print a matrix to the console
     private void printMatrix(int[][] matrix) {
-        // Iterate through matrix rows
         for (int[] row : matrix) {
-            // Print each element in the row
             for (int value : row) {
                 System.out.print(value + " ");
             }
-            // New line after each row
             System.out.println();
         }
     }
