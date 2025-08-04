@@ -1,7 +1,8 @@
 // Name: Ernesto Morales Carrasco
 // Email: emoralescarras@cnm.edu
-// Assignment: Networking Part 1
-// Purpose: Implements the client-side GUI, file reading, and matrix transmission to the server
+// Assignment: Networking Part 2
+// Purpose: Implements the client-side GUI, file reading, 
+// and matrix transmission, and result display to the server
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -14,13 +15,14 @@ public class Client {
     private JFrame frame;
     private JTextField fileField;
     private JButton submitButton;
+    private JTextArea resultArea;
 
     // Method to initialize and start the client
     public void start() {
         // Initialize GUI
         frame = new JFrame("Matrix Client");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(400, 150);
+        frame.setSize(400, 300);
         frame.setLayout(null);
 
         // Create and position text field for filename input
@@ -32,6 +34,12 @@ public class Client {
         submitButton = new JButton("Submit");
         submitButton.setBounds(230, 20, 100, 30);
         frame.add(submitButton);
+
+        // Create and position result area
+        resultArea = new JTextArea();
+        resultArea.setBounds(20, 60, 340, 200);
+        resultArea.setEditable(false);
+        frame.add(resultArea);
 
         // Add action listener to handle button click
         submitButton.addActionListener(new ActionListener() {
@@ -73,23 +81,47 @@ public class Client {
 
                     // Send matrices to server
                     try (Socket socket = new Socket("localhost", 8000); // Connect to server
-                            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
+                            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+                            ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
                         out.writeObject(matrix1);
                         out.writeObject(matrix2);
-                        out.flush(); 
+                        out.writeObject("CONTINUE");
+                        out.flush();
+
+                        int[][] resultMatrix = (int[][]) in.readObject();
+                        displayResult(resultMatrix);
+
+                        out.writeObject("TERMINATE");
+                        out.flush();
+
                     } catch (IOException ex) {
                         System.err.println("Error connecting to server: " + ex.getMessage());
+                        resultArea.setText("Error connecting to server: " + ex.getMessage());
                     }
 
                 } catch (FileNotFoundException ex) {
                     System.err.println("File not found: " + filename);
+                    resultArea.setText("File not found: " + filename);
                 } catch (Exception ex) {
                     System.err.println("Error reading file: " + ex.getMessage());
+                    resultArea.setText("Error reading file: " + ex.getMessage());
                 }
             }
         });
 
         // Display GUI
         frame.setVisible(true);
+    }
+
+    // Display result matrix in textarea
+    private void displayResult(int[][] matrix) {
+        StringBuilder sb = new StringBuilder("Result Matrix:\n");
+        for (int[] row : matrix) {
+            for (int value : row) {
+                sb.append(value).append(" ");
+            }
+            sb.append("\n");
+        }
+        resultArea.setText(sb.toString());
     }
 }
